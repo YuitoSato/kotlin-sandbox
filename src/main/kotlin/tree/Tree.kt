@@ -58,7 +58,7 @@ data class Tree<T>(
             val parentIdToChildren = flatList.groupBy { it.findParentId() }
             val rootOpt = parentIdToChildren[null]?.first()
             val treeOpt = rootOpt?.let { Tree(it, mutableListOf()) }
-            val rootChildren= parentIdToChildren.getOrDefault(rootOpt?.findId(), mutableListOf())
+            val rootChildren = parentIdToChildren.getOrDefault(rootOpt?.findId(), mutableListOf())
             val stack: Stack<Pair<TreeConvertible<S>, List<Int>>> = Stack()
             rootChildren.withIndex().reversed().forEach { pair ->
                 val (index, element) = pair
