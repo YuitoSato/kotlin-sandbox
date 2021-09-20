@@ -17,7 +17,7 @@ data class Tree<T>(
         return current
     }
 
-    fun <S> map(f: (T) -> S): Tree<S> {
+    fun <S> mapByDFS(f: (T) -> S): Tree<S> {
         val stack: Stack<Pair<Tree<T>, List<Int>>> = Stack()
         val tree: Tree<S> = Tree(f(data), mutableListOf())
 
@@ -41,8 +41,36 @@ data class Tree<T>(
         return tree
     }
 
+    fun <S> mapByBFS(f: (T) -> S): Tree<S> {
+        // 幅優先探索における次に処理すべきノードを格納するキュー
+        val queue: Queue<Pair<Tree<T>, List<Int>>> = LinkedList()
+        var tree: Tree<S>? = null
+
+        queue += Pair(this, listOf())
+
+        while (queue.isNotEmpty()) {
+            val (currentTree, indexList) = queue.poll()
+            val newTree = Tree(
+                f(currentTree.data),
+                mutableListOf()
+            )
+            if (tree == null) {
+                tree = newTree
+            } else {
+                tree.find(indexList.take(indexList.size - 1))
+                    ?.children?.add(newTree)
+            }
+
+            currentTree.children.withIndex().forEach { pair ->
+                val (index, t) = pair
+                queue += Pair(t, indexList.plus(index))
+            }
+        }
+        return tree!!
+    }
+
     fun <S> forEach(f: (T) -> S) {
-        map(f)
+        mapByDFS(f)
     }
 
     fun <S> reduce(acc: S, f: (S, T) -> S): S {
@@ -51,6 +79,25 @@ data class Tree<T>(
             result = f(result, it)
         }
         return result
+    }
+
+    fun <S> mapRecursively(f: (T) -> S): Tree<S> {
+        fun loop(tree: Tree<T>): Tree<S> {
+            return Tree(f(tree.data), tree.children.map { loop(it) }.toMutableList())
+        }
+
+        return loop(this)
+    }
+
+    fun mapTree(f: (Tree<T>) -> Tree<T>): Tree<T> {
+        fun loop(tree: Tree<T>): Tree<T> {
+            val newTree = f(tree)
+            return newTree.copy(
+                children = newTree.children.map { loop(it) }.toMutableList()
+            )
+        }
+
+        return loop(this)
     }
 
     companion object {

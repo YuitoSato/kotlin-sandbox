@@ -1,6 +1,7 @@
 package tree
 
 import org.junit.jupiter.api.Assertions.assertEquals
+import org.junit.jupiter.api.Test
 
 internal class TreeTest {
     private val tree = Tree(
@@ -30,9 +31,9 @@ internal class TreeTest {
         )
     )
 
-    @org.junit.jupiter.api.Test
-    fun map() {
-        val newTree = tree.map { ele -> ele + 1 }
+    @Test
+    fun mapByDFS() {
+        val newTree = tree.mapByDFS { ele -> ele + 1 }
 
         assertEquals(
             Tree(
@@ -65,14 +66,90 @@ internal class TreeTest {
         )
     }
 
-    @org.junit.jupiter.api.Test
+    @Test
+    fun mapByBFS() {
+        val newTree = tree.mapByBFS { ele -> ele + 1 }
+
+        assertEquals(
+            Tree(
+                2,
+                mutableListOf(
+                    Tree(
+                        12,
+                        mutableListOf(
+                            Tree(112, mutableListOf()),
+                            Tree(113, mutableListOf()),
+                            Tree(
+                                114,
+                                mutableListOf(
+                                    Tree(1132, mutableListOf()),
+                                    Tree(1133, mutableListOf()),
+                                    Tree(1134, mutableListOf())
+                                )
+                            )
+                        )
+                    ),
+                    Tree(
+                        22,
+                        mutableListOf(
+                            Tree(212, mutableListOf())
+                        )
+                    )
+                )
+            ),
+            newTree
+        )
+    }
+
+    @Test
+    fun mapRecursively() {
+        val newTree = tree.mapRecursively { ele -> ele + 1 }
+        (1..10000).fold(Tree(1, mutableListOf()), { acc, i ->
+            Tree(
+                i,
+                mutableListOf(acc)
+            )
+        }).mapRecursively { it + 1 }
+
+        assertEquals(
+            Tree(
+                2,
+                mutableListOf(
+                    Tree(
+                        12,
+                        mutableListOf(
+                            Tree(112, mutableListOf()),
+                            Tree(113, mutableListOf()),
+                            Tree(
+                                114,
+                                mutableListOf(
+                                    Tree(1132, mutableListOf()),
+                                    Tree(1133, mutableListOf()),
+                                    Tree(1134, mutableListOf())
+                                )
+                            )
+                        )
+                    ),
+                    Tree(
+                        22,
+                        mutableListOf(
+                            Tree(212, mutableListOf())
+                        )
+                    )
+                )
+            ),
+            newTree
+        )
+    }
+
+    @Test
     fun reduce() {
         assertEquals(
             3976, tree.reduce(0) { acc, element -> acc + element }
         )
     }
 
-    @org.junit.jupiter.api.Test
+    @Test
     fun of() {
         val newTree = Tree.of(
             listOf(
