@@ -104,12 +104,6 @@ internal class TreeTest {
     @Test
     fun mapRecursively() {
         val newTree = tree.mapRecursively { ele -> ele + 1 }
-        (1..10000).fold(Tree(1, mutableListOf()), { acc, i ->
-            Tree(
-                i,
-                mutableListOf(acc)
-            )
-        }).mapRecursively { it + 1 }
 
         assertEquals(
             Tree(
@@ -143,6 +137,17 @@ internal class TreeTest {
     }
 
     @Test
+    fun mapRecursively_stackOverflow() {
+        // スタックオーバーフローを確認するようのコード
+        (1..1000).fold(Tree(1, mutableListOf()), { acc, i ->
+            Tree(
+                i,
+                mutableListOf(acc)
+            )
+        }).mapRecursively { it + 1 }
+    }
+
+    @Test
     fun reduce() {
         assertEquals(
             3976, tree.reduce(0) { acc, element -> acc + element }
@@ -151,7 +156,7 @@ internal class TreeTest {
 
     @Test
     fun of() {
-        val newTree = Tree.of(
+        val newTreeList = Tree.of(
             listOf(
                 TreeConvertibleMock(1, null),
                 TreeConvertibleMock(11, 1),
@@ -167,33 +172,35 @@ internal class TreeTest {
         )
 
         assertEquals(
-            Tree(
-                TreeConvertibleMock(1, null),
-                mutableListOf(
-                    Tree(
-                        TreeConvertibleMock(11, 1),
-                        mutableListOf(
-                            Tree(TreeConvertibleMock(111, 11), mutableListOf()),
-                            Tree(TreeConvertibleMock(112, 11), mutableListOf()),
-                            Tree(
-                                TreeConvertibleMock(113, 11),
-                                mutableListOf(
-                                    Tree(TreeConvertibleMock(1131, 113), mutableListOf()),
-                                    Tree(TreeConvertibleMock(1132, 113), mutableListOf()),
-                                    Tree(TreeConvertibleMock(1134, 113), mutableListOf())
+            listOf(
+                Tree(
+                    TreeConvertibleMock(1, null),
+                    mutableListOf(
+                        Tree(
+                            TreeConvertibleMock(11, 1),
+                            mutableListOf(
+                                Tree(TreeConvertibleMock(111, 11), mutableListOf()),
+                                Tree(TreeConvertibleMock(112, 11), mutableListOf()),
+                                Tree(
+                                    TreeConvertibleMock(113, 11),
+                                    mutableListOf(
+                                        Tree(TreeConvertibleMock(1131, 113), mutableListOf()),
+                                        Tree(TreeConvertibleMock(1132, 113), mutableListOf()),
+                                        Tree(TreeConvertibleMock(1134, 113), mutableListOf())
+                                    )
                                 )
                             )
-                        )
-                    ),
-                    Tree(
-                        TreeConvertibleMock(21, 1),
-                        mutableListOf(
-                            Tree(TreeConvertibleMock(211, 21), mutableListOf())
+                        ),
+                        Tree(
+                            TreeConvertibleMock(21, 1),
+                            mutableListOf(
+                                Tree(TreeConvertibleMock(211, 21), mutableListOf())
+                            )
                         )
                     )
                 )
             ),
-            newTree
+            newTreeList
         )
     }
 }

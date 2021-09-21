@@ -3,42 +3,34 @@ package tree
 import java.util.*
 
 data class Tree<T>(
-    var data: T,
+    val data: T,
     var children: MutableList<Tree<T>>
 ) {
 
-    fun find(indexList: List<Int>): Tree<T>? {
-        var current = this
-        indexList.forEach { index ->
-            val currentOpt = current.children.getOrNull(index)
-            if (currentOpt == null) return currentOpt
-            current = currentOpt
-        }
-        return current
-    }
-
     fun <S> mapByDFS(f: (T) -> S): Tree<S> {
+        // 深さ優先探索における次に処理すべきノードを格納するスタック
         val stack: Stack<Pair<Tree<T>, List<Int>>> = Stack()
-        val tree: Tree<S> = Tree(f(data), mutableListOf())
+        var tree: Tree<S>? = null
+        stack.push(Pair(this, listOf()))
 
-        children.withIndex().reversed().forEach { pair ->
-            val (index, t) = pair
-            stack.push(Pair(t, listOf(index)))
-        }
         while (stack.isNotEmpty()) {
             val (currentTree, indexList) = stack.pop()
             val newTree = Tree(
                 f(currentTree.data),
                 mutableListOf()
             )
-            tree.find(indexList.take(indexList.size - 1))
-                ?.children?.add(newTree)
+            if (tree == null) {
+                tree = newTree
+            } else {
+                tree.find(indexList.take(indexList.size - 1))
+                    ?.children?.add(newTree)
+            }
             currentTree.children.withIndex().reversed().forEach { pair ->
                 val (index, t) = pair
                 stack.push(Pair(t, indexList.plus(index)))
             }
         }
-        return tree
+        return tree!!
     }
 
     fun <S> mapByBFS(f: (T) -> S): Tree<S> {
@@ -47,7 +39,6 @@ data class Tree<T>(
         var tree: Tree<S>? = null
 
         queue += Pair(this, listOf())
-
         while (queue.isNotEmpty()) {
             val (currentTree, indexList) = queue.poll()
             val newTree = Tree(
@@ -60,13 +51,29 @@ data class Tree<T>(
                 tree.find(indexList.take(indexList.size - 1))
                     ?.children?.add(newTree)
             }
-
             currentTree.children.withIndex().forEach { pair ->
                 val (index, t) = pair
                 queue += Pair(t, indexList.plus(index))
             }
         }
         return tree!!
+    }
+
+    fun <S> mapRecursively(f: (T) -> S): Tree<S> {
+        fun loop(tree: Tree<T>): Tree<S> {
+            return Tree(f(tree.data), tree.children.map { loop(it) }.toMutableList())
+        }
+        return loop(this)
+    }
+
+    fun find(indexList: List<Int>): Tree<T>? {
+        var current = this
+        indexList.forEach { index ->
+            val currentOpt = current.children.getOrNull(index)
+            if (currentOpt == null) return currentOpt
+            current = currentOpt
+        }
+        return current
     }
 
     fun <S> forEach(f: (T) -> S) {
@@ -81,14 +88,6 @@ data class Tree<T>(
         return result
     }
 
-    fun <S> mapRecursively(f: (T) -> S): Tree<S> {
-        fun loop(tree: Tree<T>): Tree<S> {
-            return Tree(f(tree.data), tree.children.map { loop(it) }.toMutableList())
-        }
-
-        return loop(this)
-    }
-
     fun mapTree(f: (Tree<T>) -> Tree<T>): Tree<T> {
         fun loop(tree: Tree<T>): Tree<T> {
             val newTree = f(tree)
@@ -96,36 +95,44 @@ data class Tree<T>(
                 children = newTree.children.map { loop(it) }.toMutableList()
             )
         }
-
         return loop(this)
     }
 
     companion object {
-        fun <S> of(flatList: List<TreeConvertible<S>>): Tree<TreeConvertible<S>>? {
-            val parentIdToChildren = flatList.groupBy { it.findParentId() }
-            val rootOpt = parentIdToChildren[null]?.first()
-            val treeOpt = rootOpt?.let { Tree(it, mutableListOf()) }
-            val rootChildren = parentIdToChildren.getOrDefault(rootOpt?.findId(), mutableListOf())
-            val stack: Stack<Pair<TreeConvertible<S>, List<Int>>> = Stack()
-            rootChildren.withIndex().reversed().forEach { pair ->
-                val (index, element) = pair
-                stack.push(Pair(element, listOf(index)))
-            }
+        fun <T : TreeConvertible<S>, S> of(flatList: List<T>): List<Tree<T>> {
+            val parentIdToChildren = flatList.groupBy { it.findParentId() }.toMutableMap()
 
-            while (stack.isNotEmpty()) {
-                val (element, indexList) = stack.pop()
-                val newTree = Tree(element, mutableListOf())
-                treeOpt?.find(indexList.take(indexList.size - 1))
-                    ?.children?.add(newTree)
-                val children = parentIdToChildren.getOrDefault(element.findId(), mutableListOf())
+            fun buildTree(root: T): Tree<T> {
+                val queue: Queue<Pair<T, List<Int>>> = LinkedList()
+                var tree: Tree<T>? = null
 
-                children.withIndex().reversed().forEach { pair ->
-                    val (index, childElement) = pair
-                    stack.push(Pair(childElement, indexList.plus(index)))
+                queue += Pair(root, listOf())
+                while (queue.isNotEmpty()) {
+                    val (currentData, indexList) = queue.poll()
+                    val newTree = Tree(
+                        currentData,
+                        mutableListOf()
+                    )
+                    if (tree == null) {
+                        tree = newTree
+                    } else {
+                        tree.find(indexList.take(indexList.size - 1))
+                            ?.children?.add(newTree)
+                    }
+                    val children = parentIdToChildren.getOrDefault(currentData.findId(), mutableListOf())
+                    parentIdToChildren.remove(currentData.findId())
+                    children.withIndex().forEach { pair ->
+                        val (index, t) = pair
+                        queue += Pair(t, indexList.plus(index))
+                    }
+                    println(queue)
                 }
+                return tree!!
             }
 
-            return treeOpt
+            val rootDataList = parentIdToChildren[null] ?: listOf()
+            parentIdToChildren.remove(null)
+            return rootDataList.map { root -> buildTree(root) }
         }
     }
 }
