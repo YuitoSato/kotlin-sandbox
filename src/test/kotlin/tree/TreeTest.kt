@@ -3,6 +3,11 @@ package tree
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Test
 
+data class FlatListItemMock(
+    val id: Int,
+    val parentId: Int?
+)
+
 internal class TreeTest {
     private val tree = Tree(
         1,
@@ -157,44 +162,46 @@ internal class TreeTest {
     @Test
     fun of() {
         val newTreeList = Tree.of(
-            listOf(
-                TreeConvertibleMock(1, null),
-                TreeConvertibleMock(11, 1),
-                TreeConvertibleMock(21, 1),
-                TreeConvertibleMock(111, 11),
-                TreeConvertibleMock(112, 11),
-                TreeConvertibleMock(113, 11),
-                TreeConvertibleMock(211, 21),
-                TreeConvertibleMock(1131, 113),
-                TreeConvertibleMock(1132, 113),
-                TreeConvertibleMock(1134, 113)
+            getId = { data -> data.id },
+            getParentId = { data -> data.parentId },
+            flatList = listOf(
+                FlatListItemMock(1, null),
+                FlatListItemMock(11, 1),
+                FlatListItemMock(21, 1),
+                FlatListItemMock(111, 11),
+                FlatListItemMock(112, 11),
+                FlatListItemMock(113, 11),
+                FlatListItemMock(211, 21),
+                FlatListItemMock(1131, 113),
+                FlatListItemMock(1132, 113),
+                FlatListItemMock(1134, 113)
             )
         )
 
         assertEquals(
             listOf(
                 Tree(
-                    TreeConvertibleMock(1, null),
+                    FlatListItemMock(1, null),
                     mutableListOf(
                         Tree(
-                            TreeConvertibleMock(11, 1),
+                            FlatListItemMock(11, 1),
                             mutableListOf(
-                                Tree(TreeConvertibleMock(111, 11), mutableListOf()),
-                                Tree(TreeConvertibleMock(112, 11), mutableListOf()),
+                                Tree(FlatListItemMock(111, 11), mutableListOf()),
+                                Tree(FlatListItemMock(112, 11), mutableListOf()),
                                 Tree(
-                                    TreeConvertibleMock(113, 11),
+                                    FlatListItemMock(113, 11),
                                     mutableListOf(
-                                        Tree(TreeConvertibleMock(1131, 113), mutableListOf()),
-                                        Tree(TreeConvertibleMock(1132, 113), mutableListOf()),
-                                        Tree(TreeConvertibleMock(1134, 113), mutableListOf())
+                                        Tree(FlatListItemMock(1131, 113), mutableListOf()),
+                                        Tree(FlatListItemMock(1132, 113), mutableListOf()),
+                                        Tree(FlatListItemMock(1134, 113), mutableListOf())
                                     )
                                 )
                             )
                         ),
                         Tree(
-                            TreeConvertibleMock(21, 1),
+                            FlatListItemMock(21, 1),
                             mutableListOf(
-                                Tree(TreeConvertibleMock(211, 21), mutableListOf())
+                                Tree(FlatListItemMock(211, 21), mutableListOf())
                             )
                         )
                     )

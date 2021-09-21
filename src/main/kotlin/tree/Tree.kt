@@ -99,8 +99,8 @@ data class Tree<T>(
     }
 
     companion object {
-        fun <T : TreeConvertible<S>, S> of(flatList: List<T>): List<Tree<T>> {
-            val parentIdToChildren = flatList.groupBy { it.findParentId() }.toMutableMap()
+        fun <T, ID> of(getId: (T) -> ID, getParentId: (T) -> ID?, flatList: List<T>): List<Tree<T>> {
+            val parentIdToChildren = flatList.groupBy { getParentId(it) }.toMutableMap()
 
             fun buildTree(root: T): Tree<T> {
                 val queue: Queue<Pair<T, List<Int>>> = LinkedList()
@@ -119,8 +119,8 @@ data class Tree<T>(
                         tree.find(indexList.take(indexList.size - 1))
                             ?.children?.add(newTree)
                     }
-                    val children = parentIdToChildren.getOrDefault(currentData.findId(), mutableListOf())
-                    parentIdToChildren.remove(currentData.findId())
+                    val children = parentIdToChildren.getOrDefault(getId(currentData), mutableListOf())
+                    parentIdToChildren.remove(getId(currentData))
                     children.withIndex().forEach { pair ->
                         val (index, t) = pair
                         queue += Pair(t, indexList.plus(index))
